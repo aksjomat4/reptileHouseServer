@@ -1,0 +1,58 @@
+version: "3"
+services:
+  influxdb:
+    container_name: influx
+    image: influxdb:1.8
+    env_file: configuration.env
+    restart: always
+    ports:
+      - "8086:8086"
+    networks:
+      - reptileNet
+    volumes:
+      - influxdb-data:/var/lib/influxdb
+
+  telegraf:
+    container_name: telegraf
+    image: telegraf
+    restart: always
+    volumes:
+      - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      - mosquitto
+      - influxdb
+    networks:
+      - reptileNet
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    env_file: configuration.env
+    restart: always
+    ports:
+      - "3000:3000"
+    networks:
+      - reptileNet
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - influxdb
+
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto:latest
+    user: "0"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    networks:
+      - reptileNet
+
+networks:
+  reptileNet:
+
+volumes:
+  influxdb-data:
+  grafana-data:
